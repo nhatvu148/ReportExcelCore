@@ -13,8 +13,29 @@ namespace ReportExcelCore
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             string pathDirectory = $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}";
-            var fileSource = new FileInfo($"{pathDirectory}/../input/DLP-Prediction.xlsm");
-            var fileDestination = new FileInfo($"{pathDirectory}/../output/DLP-Prediction1.xlsm");
+
+            var inPredictionPath = $"{pathDirectory}/../input/DLP-Prediction.xlsm";
+            var outPredictionPath = $"{pathDirectory}/../output/DLP-Prediction1.xlsm";
+
+            var shipinpPath = $"{pathDirectory}/../input/SHIPINP.DAT";
+            var inpparaPath = $"{pathDirectory}/../input/INPPARA.DAT";
+
+            if (args == null || args.Length == 0)
+            {
+                // no arguments
+                //startTime = "2021-01-15 23:40:00";
+                //endTime = "2021-01-25 23:00:00";
+            }
+            else
+            {
+                inPredictionPath = Convert.ToString(args[0]);
+                outPredictionPath = inPredictionPath;
+                shipinpPath = Convert.ToString(args[1]);
+                inpparaPath = Convert.ToString(args[2]);
+            }
+
+            var fileSource = new FileInfo(inPredictionPath);
+            var fileDestination = new FileInfo(outPredictionPath);
 
             double alpp = 0;
             double vhw = 0;
@@ -28,7 +49,7 @@ namespace ReportExcelCore
             var waveL = new List<Dictionary<string, double>>();
 
             // Read data from shipinp.dat
-            using (TextFieldParser parser = new TextFieldParser($"{pathDirectory}/../input/SHIPINP.DAT"))
+            using (TextFieldParser parser = new TextFieldParser(shipinpPath))
             {
                 parser.TextFieldType = FieldType.Delimited;
                 parser.SetDelimiters(",");
@@ -51,8 +72,8 @@ namespace ReportExcelCore
             }
 
             // Read data from INPPARA.dat, 2 parsers for 2 reader iterations
-            using (TextFieldParser parser = new TextFieldParser($"{pathDirectory}/../input/INPPARA.DAT"))
-            using (TextFieldParser parser2 = new TextFieldParser($"{pathDirectory}/../input/INPPARA.DAT"))
+            using (TextFieldParser parser = new TextFieldParser(inpparaPath))
+            using (TextFieldParser parser2 = new TextFieldParser(inpparaPath))
             {
                 parser.TextFieldType = FieldType.Delimited;
                 parser.SetDelimiters(",");
