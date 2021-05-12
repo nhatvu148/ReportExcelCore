@@ -229,6 +229,8 @@ namespace ReportExcelCore
                     worksheetSource.Cells[12 + i, 11].Value = 1;
                 }
 
+                worksheetSource.Cells[8, 9].Value = responseData[0]["name"];
+
                 excelFileSource.SaveAs(fileDestination);
             }
         }
