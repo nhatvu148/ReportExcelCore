@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualBasic.FileIO;
 using OfficeOpenXml;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
@@ -15,7 +16,16 @@ namespace ReportExcelCore
             var fileSource = new FileInfo($"{pathDirectory}/../input/DLP-Prediction.xlsm");
             var fileDestination = new FileInfo($"{pathDirectory}/../output/DLP-Prediction1.xlsm");
 
-            int alpp = 0;
+            double alpp = 0;
+            double vhw = 0;
+            double speed = 0;
+            int iramform = 0;
+            int nchi = 0;
+            double nram = 0;
+
+            var waveH = new List<Dictionary<string, double>>();
+            var waveDir = new List<Dictionary<string, double>>();
+            var waveL = new List<Dictionary<string, double>>();
 
             using (TextFieldParser parser = new TextFieldParser($"{pathDirectory}/../input/SHIPINP.DAT"))
             {
@@ -33,7 +43,7 @@ namespace ReportExcelCore
                         {
                             //TODO: Process field
                             string[] ssize = field.Split(null);
-                            alpp = Int32.Parse(ssize[0]);
+                            alpp = double.Parse(ssize[0]);
                             break;
                         }
                     }
@@ -41,10 +51,14 @@ namespace ReportExcelCore
             }
 
             using (TextFieldParser parser = new TextFieldParser($"{pathDirectory}/../input/INPPARA.DAT"))
+            using (TextFieldParser parser2 = new TextFieldParser($"{pathDirectory}/../input/INPPARA.DAT"))
             {
                 parser.TextFieldType = FieldType.Delimited;
                 parser.SetDelimiters(",");
-                int counter = 0;
+
+                int nhwIndex = 0, nchiIndex = 0, nramIndex = 0, outputParamIndex = 0, ipaccfouIndex = 0, nhaccoutIndex = 0,
+                    iprsfouIndex = 0, idif2outIndex = 0;
+                int idxCounter = 0;
                 while (!parser.EndOfData)
                 {
                     //Process row
@@ -52,14 +66,101 @@ namespace ReportExcelCore
 
                     foreach (string field in fields)
                     {
-                        if (counter++ == 4)
+                        if (field.Contains("#      nhw"))
                         {
-                            //TODO: Process field
-                            string[] ssize = field.Split(null);
-                            alpp = Int32.Parse(ssize[0]);
-                            break;
+                            nhwIndex = idxCounter;
                         }
+                        if (field.Contains("#     nchi"))
+                        {
+                            nchiIndex = idxCounter;
+                        }
+                        if (field.Contains("#     nram  iramform"))
+                        {
+                            nramIndex = idxCounter;
+                        }
+                        if (field.Contains("*Output Parameter"))
+                        {
+                            outputParamIndex = idxCounter;
+                        }
+                        if (field.Contains("# ipaccfou  ipacchis  ipaccspc  ipaccprb  ipaccmax ipaccoutd"))
+                        {
+                            ipaccfouIndex = idxCounter;
+                        }
+                        if (field.Contains("# nhaccout"))
+                        {
+                            nhaccoutIndex = idxCounter;
+                        }
+                        if (field.Contains("#  iprsfou   iprshis   iprsspc   iprsprb   iprsmax  iprsoutd"))
+                        {
+                            iprsfouIndex = idxCounter;
+                        }
+                        if (field.Contains("# idif2out  irad2out  idif3out  irad3out"))
+                        {
+                            idif2outIndex = idxCounter;
+                        }
+                        idxCounter++;
                     }
+                }
+
+                parser2.TextFieldType = FieldType.Delimited;
+                parser2.SetDelimiters(",");
+                int counter = 0;
+                double nhw = 0;
+                double nfn = 0;
+                while (!parser2.EndOfData)
+                {
+                    string[] fields = parser2.ReadFields();
+
+                    foreach (string field in fields)
+                    {
+                        string[] ssize = field.Split(null);
+                        if (counter == nchiIndex + 1)
+                        {
+                            nchi = int.Parse(ssize[0]);
+                        }
+                        if (counter == nramIndex + 1)
+                        {
+                            nram = double.Parse(ssize[0]);
+                            iramform = int.Parse(ssize[ssize.Length - 1]);
+                        }
+                        if (counter == nhwIndex + 1)
+                        {
+                            nhw = double.Parse(ssize[0]);
+                        }
+                        if (counter == 13)
+                        {
+                            nfn = double.Parse(ssize[0]);
+                        }
+                        if (counter > nhwIndex + 2 && counter < nchiIndex)
+                        {
+                            waveH.Add(new Dictionary<string, double>() { { "vhw", double.Parse(ssize[0]) } });
+                        }
+                        if (counter > nchiIndex + 2 && counter < nramIndex)
+                        {
+                            waveDir.Add(new Dictionary<string, double>() { { "vchi", double.Parse(ssize[0]) } });
+                        }
+                        if (counter > nramIndex + 2 && counter < outputParamIndex)
+                        {
+                            waveL.Add(new Dictionary<string, double>() { { "vram", double.Parse(ssize[0]) } });
+                        }
+
+                        counter++;
+                    }
+                }
+
+                speed = nhw * nfn;
+                for (int i = 0; i < waveDir.Count; i++)
+                {
+                    foreach (var kvp in waveDir[i])
+                    {
+                        Console.WriteLine(kvp.Key);
+                        Console.WriteLine(kvp.Value);
+                    }
+                }
+
+                foreach (var kvp in waveH[waveH.Count - 1])
+                {
+                    vhw = kvp.Value;
                 }
             }
 
@@ -68,7 +169,28 @@ namespace ReportExcelCore
             using (var excelFileDestination = new ExcelPackage(fileDestination))
             {
                 var worksheetSource = excelFileSource.Workbook.Worksheets[1];
+                worksheetSource.Cells[4, 5].Value = vhw;
                 worksheetSource.Cells[5, 5].Value = alpp;
+                worksheetSource.Cells[5, 9].Value = 1;
+                worksheetSource.Cells[8, 3].Value = speed;
+
+
+                string[] iramformList = new string[] { "𝜆/L", "√(L/𝜆)", "ⲱ[rad/s]", "ⲱe[rad/s]", "T[s]", "Te[s]" };
+                worksheetSource.Cells[11, 5].Value = iramformList[iramform];
+
+                worksheetSource.Cells[14, 3].Value = nchi == 7 ? "Yes" : "No";
+                worksheetSource.Cells[14, 5].Value = nram;
+
+                for (var i = 0; i < waveDir.Count; i++)
+                {
+                    worksheetSource.Cells[17 + i, 3].Value = waveDir[i]["vchi"];
+                }
+
+                for (var i = 0; i < waveL.Count; i++)
+                {
+                    worksheetSource.Cells[17 + i, 5].Value = waveL[i]["vram"];
+                }
+
                 excelFileSource.SaveAs(fileDestination);
             }
 
