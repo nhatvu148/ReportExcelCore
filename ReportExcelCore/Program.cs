@@ -27,6 +27,7 @@ namespace ReportExcelCore
             var waveDir = new List<Dictionary<string, double>>();
             var waveL = new List<Dictionary<string, double>>();
 
+            // Read data from shipinp.dat
             using (TextFieldParser parser = new TextFieldParser($"{pathDirectory}/../input/SHIPINP.DAT"))
             {
                 parser.TextFieldType = FieldType.Delimited;
@@ -34,15 +35,14 @@ namespace ReportExcelCore
                 int counter = 0;
                 while (!parser.EndOfData)
                 {
-                    //Process row
                     string[] fields = parser.ReadFields();
 
                     foreach (string field in fields)
                     {
                         if (counter++ == 4)
                         {
-                            //TODO: Process field
                             string[] ssize = field.Split(null);
+                            // Assign first value of this row to alpp
                             alpp = double.Parse(ssize[0]);
                             break;
                         }
@@ -50,6 +50,7 @@ namespace ReportExcelCore
                 }
             }
 
+            // Read data from INPPARA.dat, 2 parsers for 2 reader iterations
             using (TextFieldParser parser = new TextFieldParser($"{pathDirectory}/../input/INPPARA.DAT"))
             using (TextFieldParser parser2 = new TextFieldParser($"{pathDirectory}/../input/INPPARA.DAT"))
             {
@@ -61,9 +62,9 @@ namespace ReportExcelCore
                 int idxCounter = 0;
                 while (!parser.EndOfData)
                 {
-                    //Process row
                     string[] fields = parser.ReadFields();
 
+                    // Extract indices for specified rows
                     foreach (string field in fields)
                     {
                         if (field.Contains("#      nhw"))
@@ -116,31 +117,38 @@ namespace ReportExcelCore
                         string[] ssize = field.Split(null);
                         if (counter == nchiIndex + 1)
                         {
+                            // Assign first value of this row to nchi
                             nchi = int.Parse(ssize[0]);
                         }
                         if (counter == nramIndex + 1)
                         {
+                            // Assign values of this row to nram, iramform
                             nram = double.Parse(ssize[0]);
                             iramform = int.Parse(ssize[ssize.Length - 1]);
                         }
                         if (counter == nhwIndex + 1)
                         {
+                            // Assign first value of this row to nhw
                             nhw = double.Parse(ssize[0]);
                         }
                         if (counter == 13)
                         {
+                            // Assign first value of this row to nfn
                             nfn = double.Parse(ssize[0]);
                         }
                         if (counter > nhwIndex + 2 && counter < nchiIndex)
                         {
+                            // Assign dictionary of vhw of this row to waveH
                             waveH.Add(new Dictionary<string, double>() { { "vhw", double.Parse(ssize[0]) } });
                         }
                         if (counter > nchiIndex + 2 && counter < nramIndex)
                         {
+                            // Assign dictionary of vchi of this row to waveDir
                             waveDir.Add(new Dictionary<string, double>() { { "vchi", double.Parse(ssize[0]) } });
                         }
                         if (counter > nramIndex + 2 && counter < outputParamIndex)
                         {
+                            // Assign dictionary of vram of this row to waveL
                             waveL.Add(new Dictionary<string, double>() { { "vram", double.Parse(ssize[0]) } });
                         }
 
@@ -160,14 +168,16 @@ namespace ReportExcelCore
 
                 foreach (var kvp in waveH[waveH.Count - 1])
                 {
+                    // Assign last waveH element's value to vhw
                     vhw = kvp.Value;
                 }
             }
 
-
+            // Read and Write xlsm
             using (var excelFileSource = new ExcelPackage(fileSource))
             using (var excelFileDestination = new ExcelPackage(fileDestination))
             {
+                // Extract data from data sheet
                 var dataSource = excelFileSource.Workbook.Worksheets[0];
                 var responseData = new List<Dictionary<string, string>>();
 
@@ -188,6 +198,7 @@ namespace ReportExcelCore
                     dataCount += 2;
                 }
 
+                // Write data to 計算設定 sheet
                 var worksheetSource = excelFileSource.Workbook.Worksheets[1];
                 worksheetSource.Cells[4, 5].Value = vhw;
                 worksheetSource.Cells[5, 5].Value = alpp;
