@@ -149,14 +149,14 @@ namespace ReportExcelCore
                 }
 
                 speed = nhw * nfn;
-                for (int i = 0; i < waveDir.Count; i++)
+                /*for (int i = 0; i < waveDir.Count; i++)
                 {
                     foreach (var kvp in waveDir[i])
                     {
                         Console.WriteLine(kvp.Key);
                         Console.WriteLine(kvp.Value);
                     }
-                }
+                }*/
 
                 foreach (var kvp in waveH[waveH.Count - 1])
                 {
@@ -168,6 +168,26 @@ namespace ReportExcelCore
             using (var excelFileSource = new ExcelPackage(fileSource))
             using (var excelFileDestination = new ExcelPackage(fileDestination))
             {
+                var dataSource = excelFileSource.Workbook.Worksheets[0];
+                var responseData = new List<Dictionary<string, string>>();
+
+                var dataCount = 2;
+                while (true)
+                {
+                    var res = dataSource.Cells[4, dataCount].Value;
+                    if (res == null)
+                    {
+                        break;
+                    }
+                    string[] arr = ((string)res).Split("_");
+
+                    responseData.Add(new Dictionary<string, string>() { { "name", String.Join("_", arr[0..(arr.Length - 1)]) },
+                    { "id", dataSource.Cells[5, dataCount].Value.ToString() }
+                    });
+
+                    dataCount += 2;
+                }
+
                 var worksheetSource = excelFileSource.Workbook.Worksheets[1];
                 worksheetSource.Cells[4, 5].Value = vhw;
                 worksheetSource.Cells[5, 5].Value = alpp;
@@ -191,10 +211,15 @@ namespace ReportExcelCore
                     worksheetSource.Cells[17 + i, 5].Value = waveL[i]["vram"];
                 }
 
+                for (var i = 0; i < responseData.Count; i++)
+                {
+                    worksheetSource.Cells[12 + i, 9].Value = responseData[i]["name"];
+                    worksheetSource.Cells[12 + i, 10].Value = int.Parse(responseData[i]["id"]);
+                    worksheetSource.Cells[12 + i, 11].Value = 1;
+                }
+
                 excelFileSource.SaveAs(fileDestination);
             }
-
-            Console.WriteLine("Hello World!");
         }
     }
 }
