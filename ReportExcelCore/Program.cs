@@ -15,6 +15,7 @@ namespace ReportExcelCore
             string pathDirectory = $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}";
 
             var inPredictionPath = $"{pathDirectory}/../input/DLP-Prediction.xlsm";
+            var inRAOoutputPath = $"{pathDirectory}/../input/RAOoutput.csv";
             var outPredictionPath = $"{pathDirectory}/../output/DLP-Prediction1.xlsm";
 
             var shipinpPath = $"{pathDirectory}/../input/SHIPINP.DAT";
@@ -29,13 +30,50 @@ namespace ReportExcelCore
             else
             {
                 inPredictionPath = Convert.ToString(args[0]);
+                inRAOoutputPath = Convert.ToString(args[1]);
                 outPredictionPath = inPredictionPath;
-                shipinpPath = Convert.ToString(args[1]);
-                inpparaPath = Convert.ToString(args[2]);
+                shipinpPath = Convert.ToString(args[2]);
+                inpparaPath = Convert.ToString(args[3]);
             }
 
             var fileSource = new FileInfo(inPredictionPath);
             var fileDestination = new FileInfo(outPredictionPath);
+
+            // Read data from RAOoutput.csv, Copy RAOoutput.csv to Data sheet
+            using (TextFieldParser parser = new TextFieldParser(inRAOoutputPath))
+            using (ExcelPackage excelFile = new ExcelPackage(fileSource))
+            {
+                var worksheet = excelFile.Workbook.Worksheets[0];
+                parser.TextFieldType = FieldType.Delimited;
+                parser.SetDelimiters(",");
+                int row = 1;
+                while (!parser.EndOfData)
+                {
+                    string[] fields = parser.ReadFields();
+                    int col = 1;
+                    foreach (string field in fields)
+                    {
+                        double number;
+
+                        bool success = double.TryParse(field, out number);
+                        if (success)
+                        {
+                            // Copy number to data sheet
+                            // Check if number is an integer or double
+                            worksheet.Cells[row, col++].Value = (number == (int)number) ? (int)number : number;
+                        }
+                        else
+                        {
+                            // Copy string to data sheet
+                            worksheet.Cells[row, col++].Value = field;
+                        }
+                    }
+
+                    row++;
+                }
+
+                excelFile.SaveAs(fileSource);
+            }
 
             double alpp = 0;
             double vhw = 0;
@@ -200,7 +238,7 @@ namespace ReportExcelCore
             {
                 // Extract data from data sheet
                 var dataSource = excelFileSource.Workbook.Worksheets[0];
-                var responseData = new List<Dictionary<string, string>>();
+                var responseData = new List<Dictionary<string, object>>();
 
                 var dataCount = 2;
                 while (true)
@@ -212,8 +250,8 @@ namespace ReportExcelCore
                     }
                     string[] arr = ((string)res).Split("_");
 
-                    responseData.Add(new Dictionary<string, string>() { { "name", String.Join("_", arr[0..(arr.Length - 1)]) },
-                    { "id", dataSource.Cells[5, dataCount].Value.ToString() }
+                    responseData.Add(new Dictionary<string, object>() { { "name", String.Join("_", arr[0..(arr.Length - 1)]) },
+                    { "id", dataSource.Cells[5, dataCount].Value }
                     });
 
                     dataCount += 2;
@@ -246,7 +284,7 @@ namespace ReportExcelCore
                 for (var i = 0; i < responseData.Count; i++)
                 {
                     worksheetSource.Cells[12 + i, 9].Value = responseData[i]["name"];
-                    worksheetSource.Cells[12 + i, 10].Value = int.Parse(responseData[i]["id"]);
+                    worksheetSource.Cells[12 + i, 10].Value = responseData[i]["id"];
                     worksheetSource.Cells[12 + i, 11].Value = 1;
                 }
 
