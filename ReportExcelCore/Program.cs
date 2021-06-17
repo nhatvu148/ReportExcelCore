@@ -265,7 +265,7 @@ namespace ReportExcelCore
                 worksheetSource.Cells[8, 3].Value = speed;
 
 
-                string[] iramformList = new string[] { "𝜆/L", "√(L/𝜆)", "ⲱ[rad/s]", "ⲱe[rad/s]", "T[s]", "Te[s]" };
+                string[] iramformList = new string[] { "λ/L", "√(L/λ)", "ω [rad/s]", "ω e[rad/s]", "T [s]", "T e[s]" };
                 worksheetSource.Cells[11, 5].Value = iramformList[iramform];
 
                 worksheetSource.Cells[14, 3].Value = nchi == 7 ? "Yes" : "No";
