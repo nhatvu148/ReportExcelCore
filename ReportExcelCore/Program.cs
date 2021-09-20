@@ -244,7 +244,7 @@ namespace ReportExcelCore
                 while (true)
                 {
                     var res = dataSource.Cells[4, dataCount].Value;
-                    if (res == null)
+                    if (res == null || (string)res == "")
                     {
                         break;
                     }
