@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using Excel = Microsoft.Office.Interop.Excel;
 
 namespace ReportExcelCore
 {
@@ -291,7 +292,46 @@ namespace ReportExcelCore
                 worksheetSource.Cells[8, 9].Value = responseData[0]["name"];
 
                 excelFileSource.SaveAs(fileDestination);
+
+                ExecuteMacro(Path.GetFullPath(fileDestination.ToString()).ToString());
+            }
+        }
+
+        public static void ExecuteMacro(string input)
+        {
+            Excel.Application xlApp = new Excel.Application();
+            Excel.Workbook xlWorkBook;
+
+            xlWorkBook = xlApp.Workbooks.Open(input);
+
+            xlApp.Run("I_UpdateDataForNMRIServer");
+
+            xlWorkBook.Application.CutCopyMode = 0;
+            xlWorkBook.Save();
+            xlWorkBook.Close(false);
+
+            xlApp.Quit();
+
+            ReleaseObject(xlApp);
+            ReleaseObject(xlWorkBook);
+        }
+
+        public static void ReleaseObject(object obj)
+        {
+            try
+            {
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(obj);
+                obj = null;
+            }
+            catch (Exception ex)
+            {
+                obj = null;
+            }
+            finally
+            {
+                GC.Collect();
             }
         }
     }
 }
+

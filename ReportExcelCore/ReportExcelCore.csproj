@@ -6,7 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EPPlus" Version="5.6.3" />
+    <PackageReference Include="EPPlus" Version="5.8.4" />
+    <PackageReference Include="Excel.2016" Version="15.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
