@@ -272,9 +272,22 @@ namespace ReportExcelCore
                 worksheetSource.Cells[14, 3].Value = nchi == 7 ? "Yes" : "No";
                 worksheetSource.Cells[14, 5].Value = nram;
 
+                var vchiIncrement = 0.0;
                 for (var i = 0; i < waveDir.Count; i++)
                 {
+                    if (i == waveDir.Count - 1)
+                    {
+                        vchiIncrement = waveDir[i]["vchi"] - waveDir[i - 1]["vchi"];
+                    }
                     worksheetSource.Cells[17 + i, 3].Value = waveDir[i]["vchi"];
+                }
+                if (waveDir.Count < 12)
+                {
+                    var lastIndex = waveDir.Count - 1;
+                    for (var i = waveDir.Count; i < 12; i++)
+                    {
+                        worksheetSource.Cells[17 + i, 3].Value = waveDir[lastIndex]["vchi"] + vchiIncrement * (i - lastIndex);
+                    }
                 }
 
                 for (var i = 0; i < waveL.Count; i++)
