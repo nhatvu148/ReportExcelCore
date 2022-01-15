@@ -15,7 +15,7 @@ namespace ReportExcelCore
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             string pathDirectory = $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}";
 
-            var inPredictionPath = $"{pathDirectory}/../input/DLP-Prediction.xlsm";
+            var inPredictionPath = $"{pathDirectory}/../input/DLP-PredictionEN_v114.xlsm";
             var inRAOoutputPath = $"{pathDirectory}/../input/RAOoutput.csv";
             var outPredictionPath = $"{pathDirectory}/../output/DLP-Prediction1.xlsm";
 
@@ -266,7 +266,7 @@ namespace ReportExcelCore
                 worksheetSource.Cells[8, 3].Value = speed;
 
 
-                string[] iramformList = new string[] { "λ/L", "√(L/λ)", "ω [rad/s]", "ω e[rad/s]", "T [s]", "T e[s]" };
+                string[] iramformList = new string[] { "lambda/L", "√(L/λ)", "omega [rad/s]", "ω e[rad/s]", "T [s]", "T e[s]" };
                 worksheetSource.Cells[11, 5].Value = iramformList[iramform];
 
                 worksheetSource.Cells[14, 3].Value = nchi == 7 ? "Yes" : "No";
